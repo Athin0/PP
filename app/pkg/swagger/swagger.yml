@@ -1,0 +1,134 @@
+swagger: "2.0"
+info:
+  description: HTTP server in Go with Swagger endpoints definition
+  title: PP
+  version: 0.0.1
+host: localhost:8081
+schemes:
+  - http
+basePath: /
+consumes:
+  - application/json
+produces:
+  - application/json
+
+paths:
+  /health/check:
+    get:
+      operationId: checkHealth
+      produces:
+        - application/json
+      responses:
+        200:
+          description: 'OK'
+          schema:
+            type: object
+            properties:
+              app:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: 'Application version'
+                  status:
+                    type: boolean
+                    description: 'Application status'
+              kafka:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: 'Kafka version'
+                  status:
+                    type: boolean
+                    description: 'Kafka status'
+              workers:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    uuid:
+                      type: string
+                      description: 'Worker uuid'
+                    status:
+                      type: boolean
+                      description: 'Worker status'
+
+  /hello/{user}:
+    get:
+      operationId: sayHello
+      description: 'Says hello to user'
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: user
+          type: string
+          required: true
+      responses:
+        200:
+          description: 'OK'
+          schema:
+            type: string
+        400:
+          description: 'Invalid characters in "user" provided'
+          schema:
+            type: string
+
+  /produce:
+    post:
+      operationId: produceMessage
+      description: 'Produces message to kafka'
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          required: true
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: string
+                description: 'String to calculate'
+                example: '{a} + [b]'
+      responses:
+        200:
+          description: 'Ok producing message'
+          schema:
+            type: string
+        400:
+          description: 'Error producing message'
+          schema:
+            type: string
+        500:
+          description: 'Internal server error'
+          schema:
+            type: string
+
+  /get/results:
+    get:
+      operationId: getResults
+      description: 'Retrieves messages from kafka'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: 'Ok receiving messages'
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: 'UUID of job'
+                result:
+                  type: number
+                  description: 'Calculation result'
+        500:
+          description: 'Internal server error'
+          schema:
+            type: string

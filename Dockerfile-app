@@ -1,0 +1,51 @@
+FROM golang:alpine as builder
+
+ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+
+RUN apk add --update --no-cache alpine-sdk bash ca-certificates \
+      libressl \
+      tar \
+      git openssh openssl yajl-dev zlib-dev cyrus-sasl-dev openssl-dev coreutils curl py-pip
+
+RUN pip3 install PyYAML
+
+WORKDIR /src/app
+RUN git clone https://github.com/edenhill/librdkafka.git
+WORKDIR /src/app/librdkafka
+RUN /src/app/librdkafka/configure --prefix /usr
+RUN make
+RUN make install
+
+WORKDIR /src/app
+RUN git clone https://github.com/go-swagger/go-swagger
+WORKDIR /src/app/go-swagger
+RUN go install ./cmd/swagger
+
+WORKDIR /src/app
+RUN git clone https://github.com/goccmack/gogll.git
+WORKDIR /src/app/gogll
+RUN go install .
+
+WORKDIR /src/app
+COPY app .
+
+RUN make swagger-gen
+RUN make swagger-doc
+RUN make grammar-gen
+
+
+RUN go mod download
+RUN go mod vendor
+
+RUN make build
+
+FROM alpine:latest as runner
+
+RUN apk add --update --no-cache librdkafka librdkafka-dev pkgconf curl
+
+COPY --from=builder /src/app/bin .
+COPY --from=builder /src/app/doc ./doc
+COPY app/config ./config
+
+
+ENTRYPOINT ./app

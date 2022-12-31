@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Source+Code+Pro:300,600|Titillium+Web:400,600,700" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.24.2/swagger-ui.css" >
+  <style>
+    html
+    {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *,
+    *:before,
+    *:after
+    {
+      box-sizing: inherit;
+    }
+    body {
+      margin:0;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.24.2/swagger-ui-bundle.js"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.24.2/swagger-ui-standalone-preset.js"> </script>
+<script>
+window.onload = function() {
+  var spec = {"swagger": "2.0", "info": {"description": "HTTP server in Go with Swagger endpoints definition", "title": "PP", "version": "0.0.1"}, "host": "localhost:8081", "schemes": ["http"], "basePath": "/", "consumes": ["application/json"], "produces": ["application/json"], "paths": {"/health/check": {"get": {"operationId": "checkHealth", "produces": ["application/json"], "responses": {"200": {"description": "OK", "schema": {"type": "object", "properties": {"app": {"type": "object", "properties": {"version": {"type": "string", "description": "Application version"}, "status": {"type": "boolean", "description": "Application status"}}}, "kafka": {"type": "object", "properties": {"version": {"type": "string", "description": "Kafka version"}, "status": {"type": "boolean", "description": "Kafka status"}}}, "workers": {"type": "array", "items": {"type": "object", "properties": {"uuid": {"type": "string", "description": "Worker uuid"}, "status": {"type": "boolean", "description": "Worker status"}}}}}}}}}}, "/hello/{user}": {"get": {"operationId": "sayHello", "description": "Says hello to user", "produces": ["application/json"], "parameters": [{"in": "path", "name": "user", "type": "string", "required": true}], "responses": {"200": {"description": "OK", "schema": {"type": "string"}}, "400": {"description": "Invalid characters in \"user\" provided", "schema": {"type": "string"}}}}}, "/produce": {"post": {"operationId": "produceMessage", "description": "Produces message to kafka", "produces": ["application/json"], "parameters": [{"in": "body", "name": "request", "required": true, "schema": {"type": "object", "required": ["data"], "properties": {"data": {"type": "string", "description": "String to calculate", "example": "{a} + [b]"}}}}], "responses": {"200": {"description": "Ok producing message", "schema": {"type": "string"}}, "400": {"description": "Error producing message", "schema": {"type": "string"}}, "500": {"description": "Internal server error", "schema": {"type": "string"}}}}}, "/get/results": {"get": {"operationId": "getResults", "description": "Retrieves messages from kafka", "produces": ["application/json"], "responses": {"200": {"description": "Ok receiving messages", "schema": {"type": "array", "items": {"type": "object", "properties": {"uuid": {"type": "string", "description": "UUID of job"}, "result": {"type": "number", "description": "Calculation result"}}}}}, "500": {"description": "Internal server error", "schema": {"type": "string"}}}}}}};
+  // Build a system
+  const ui = SwaggerUIBundle({
+    spec: spec,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl
+    ],
+    layout: "StandaloneLayout"
+  })
+  window.ui = ui
+}
+</script>
+</body>
+</html>

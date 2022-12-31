@@ -1,0 +1,14 @@
+[
+  {
+    "alias": "a",
+    "path": "./static/data1.txt"
+  },
+  {
+    "alias": "b",
+    "path": "./static/data2.txt"
+  },
+  {
+    "alias": "c",
+    "path": "./static/data3.txt"
+  }
+]
