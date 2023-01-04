@@ -22,6 +22,11 @@ func HealthCheckHandler(params operations.CheckHealthParams) middleware.Responde
 
 	log.Println("Application is healthy")
 
+	workers, err := CheckHealthWorkers()
+	if err != nil {
+		log.Printf("Consumer error (app readMessage): %v \n", err)
+		return operations.NewCheckHealthInternalServerError().WithPayload("Internal server error: " + err.Error()) // may be better return more data
+	}
 	return operations.NewCheckHealthOK().WithPayload(
 		&operations.CheckHealthOKBody{
 			App: &operations.CheckHealthOKBodyApp{
@@ -32,7 +37,7 @@ func HealthCheckHandler(params operations.CheckHealthParams) middleware.Responde
 				Version: kafkaVer,
 				Status:  kafkaStat,
 			},
-			Workers: CheckHealthWorkers(),
+			Workers: workers,
 		},
 	)
 }
@@ -65,10 +70,11 @@ func CheckHealthKafka() (string, bool) {
 	return id, true
 }
 
-func CheckHealthWorkers() []*operations.CheckHealthOKBodyWorkersItems0 {
+func CheckHealthWorkers() ([]*operations.CheckHealthOKBodyWorkersItems0, error) {
 	partitions, errPart := strconv.Atoi(os.Getenv("PARTITIONS"))
 	if errPart != nil {
 		log.Printf("err in cheackHealthWorkers get PARTITIONS %v", errPart)
+		return []*operations.CheckHealthOKBodyWorkersItems0{}, errPart
 	}
 
 	c, err := kafka.NewConsumer(
@@ -80,8 +86,7 @@ func CheckHealthWorkers() []*operations.CheckHealthOKBodyWorkersItems0 {
 	)
 	if err != nil {
 		log.Println(err)
-
-		return []*operations.CheckHealthOKBodyWorkersItems0{} //todo add another status
+		return []*operations.CheckHealthOKBodyWorkersItems0{}, err
 	}
 
 	p, err := kafka.NewProducer(
@@ -92,7 +97,7 @@ func CheckHealthWorkers() []*operations.CheckHealthOKBodyWorkersItems0 {
 	if err != nil {
 		log.Println(err)
 
-		return []*operations.CheckHealthOKBodyWorkersItems0{}
+		return []*operations.CheckHealthOKBodyWorkersItems0{}, err
 	}
 
 	defer func() { _ = c.Close() }()
@@ -102,7 +107,7 @@ func CheckHealthWorkers() []*operations.CheckHealthOKBodyWorkersItems0 {
 	if err != nil {
 		log.Println(err)
 
-		return []*operations.CheckHealthOKBodyWorkersItems0{}
+		return []*operations.CheckHealthOKBodyWorkersItems0{}, err
 	}
 
 	topic := os.Getenv("KAFKA_TOPIC_WORKER_HEALTH_WRITE")
@@ -115,6 +120,10 @@ func CheckHealthWorkers() []*operations.CheckHealthOKBodyWorkersItems0 {
 			Value: []byte("true"),
 		}, nil)
 	}
+	if err != nil {
+		log.Printf("Error in produce message to kafka: %v \n", err)
+		return []*operations.CheckHealthOKBodyWorkersItems0{}, err
+	}
 
 	workers := make(map[string]bool)
 	result := make([]*operations.CheckHealthOKBodyWorkersItems0, 0)
@@ -124,19 +133,18 @@ func CheckHealthWorkers() []*operations.CheckHealthOKBodyWorkersItems0 {
 		msg, err := c.ReadMessage(10 * time.Second)
 		if err != nil {
 			log.Printf("Consumer error (app readMessage): %v \n", err)
-
-			break
+			return []*operations.CheckHealthOKBodyWorkersItems0{}, err
 		}
 		data := operations.CheckHealthOKBodyWorkersItems0{}
 		err = json.Unmarshal(msg.Value, &data)
 		if err != nil {
 			log.Println(err)
+			return []*operations.CheckHealthOKBodyWorkersItems0{}, err
 		}
 		if _, ok := workers[data.UUID]; !ok {
 			result = append(result, &data)
-
 			workers[data.UUID] = true
 		}
 	}
-	return result
+	return result, nil
 }

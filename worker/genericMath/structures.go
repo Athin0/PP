@@ -13,6 +13,9 @@ type FloatSequence struct {
 func (seq *FloatSequence) GetLength() int {
 	return seq.length
 }
+func NewFloatSequence(data []float64) *FloatSequence {
+	return &FloatSequence{data: data, length: len(data)}
+}
 
 func (seq *FloatSequence) GetMin() (float64, error) {
 	if seq.length == 0 {
@@ -51,7 +54,7 @@ func (seq *FloatSequence) GetItem(index int) (float64, error) {
 	return seq.data[index], nil
 }
 
-func (seq *FloatSequence) GetSum() (float64, error) { //todo как то еще распараkлелить?
+func (seq *FloatSequence) GetSum() (float64, error) {
 	if seq.length == 0 {
 		return 0, ErrEmptySequence
 	}
@@ -100,7 +103,7 @@ func (seq *FloatSequence) GetVarianceAsync() (float64, error) {
 
 		go func(value float64) {
 			defer wg.Done()
-			AtomicAddFloat64(&result, math.Pow(value-mean, 2))
+			AtomicAdd(&result, math.Pow(value-mean, 2))
 		}(val)
 	}
 

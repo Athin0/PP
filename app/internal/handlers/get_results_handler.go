@@ -42,7 +42,6 @@ func GetResultsHandler(params operations.GetResultsParams) middleware.Responder 
 		for i := 0; i < jobs; i++ {
 			//This is a convenience API that wraps Poll() and only returns messages or errors.
 			//All other event types are discarded.
-			//todo may be better add a Pool
 			msg, err := c.ReadMessage(-1)
 			if err != nil {
 				log.Printf("Consumer error: %v (%v)\n", err, msg)

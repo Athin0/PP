@@ -1,6 +1,20 @@
 version: '3.9'
 
 services:
+  postgres:
+    container_name: postgres
+    image: postgres:14.5
+    restart: unless-stopped
+    hostname: db
+    volumes:
+      - ./db/tables.sql:/docker-entrypoint-initdb.d/dbinit.sql
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "qwerty"
+    ports:
+      - "5433:5432"
+
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
@@ -35,7 +49,7 @@ services:
 
 
   app:
-    image: task-app
+    image: app1
     ports:
       - 8081:8081
     environment:
@@ -43,17 +57,39 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      postgres:
+        condition: service_started
     healthcheck:
       test: [ "CMD", "curl", "localhost:8081" ]
       start_period: 5s
       timeout: 5s
       retries: 3
 
-  worker1:
-    image: worker
+  app2:
+    image: app1
+    ports:
+      - 8082:8081
     environment:
       - DOCKER_COMPOSE=true
-      - SEQUENCE_PATH=static/data1.txt
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "localhost:8082" ]
+      start_period: 5s
+      timeout: 5s
+      retries: 3
+
+
+  worker1:
+    image: worker1
+    environment:
+      - DOCKER_COMPOSE=true
+      - SEQUENCE_PATH=static/c.txt
+      - DB_PASSWORD = 'qwerty'
+      - CONNECTIONSTRING = "postgres://db:5432"
     volumes:
       - ./worker/static:/static
     depends_on:
@@ -61,12 +97,15 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
+      postgres:
+        condition: service_started
 
   worker2:
-    image: worker
+    image: worker1
     environment:
       - DOCKER_COMPOSE=true
-      - SEQUENCE_PATH=static/data2.txt
+      - DB_PASSWORD = 'qwerty'
+      - CONNECTIONSTRING = "postgres://db:5432"
     volumes:
       - ./worker/static:/static
     depends_on:
@@ -74,12 +113,15 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
+      postgres:
+        condition: service_started
 
   worker3:
-    image: worker
+    image: worker1
     environment:
       - DOCKER_COMPOSE=true
-      - SEQUENCE_PATH=static/data3.txt
+      - DB_PASSWORD = 'qwerty'
+      - CONNECTIONSTRING = "postgres://db:5432"
     volumes:
       - ./worker/static:/static
     depends_on:
@@ -87,9 +129,15 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
+      postgres:
+        condition: service_started
 
 volumes:
   zookeeper_data:
     driver: local
   kafka_data:
     driver: local
+
+networks:
+  appnet:
+    driver: bridge

@@ -53,6 +53,14 @@ paths:
                     status:
                       type: boolean
                       description: 'Worker status'
+        400:
+          description: 'Error connect to Kafka'
+          schema:
+            type: string
+        500:
+          description: 'Internal server error'
+          schema:
+            type: string
 
   /hello/{user}:
     get:
@@ -128,6 +136,9 @@ paths:
                 result:
                   type: number
                   description: 'Calculation result'
+                error:
+                  type: string
+                  description: "err in worker"
         500:
           description: 'Internal server error'
           schema:

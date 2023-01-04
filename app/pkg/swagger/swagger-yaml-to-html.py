@@ -6,6 +6,7 @@
 #
 #  This file is based on
 #  https://github.com/swagger-api/swagger-ui/blob/4f1772f6544699bc748299bd65f7ae2112777abc/dist/index.html
+#  https://github.com/swagger-api/swagger-ui/blob/4f1772f6544699bc748299bd65f7ae2112777abc/dist/index.html
 #  (Copyright 2017 SmartBear Software, Licensed under Apache 2.0)
 #
 """

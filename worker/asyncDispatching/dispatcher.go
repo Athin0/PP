@@ -2,6 +2,8 @@ package asyncDispatching
 
 import (
 	"PP/worker/genericMath"
+	"fmt"
+	"reflect"
 	"sync"
 )
 
@@ -12,7 +14,6 @@ type BinaryFloatFunction func(float64, float64) float64
 type Dispatcher struct {
 	Target *Node
 	cache  *Cache
-	wp     *WorkersPool
 }
 
 type Node struct {
@@ -24,31 +25,40 @@ type Node struct {
 	BinaryAction    BinaryFloatFunction
 }
 
-func NewDispatcher(target *Node, sequence *genericMath.FloatSequence, numberOfWorkers int) *Dispatcher {
+type Job struct {
+	Data         interface{}
+	UnaryAction  UnaryFloatFunction
+	BinaryAction BinaryFloatFunction
+	Result       chan *Result
+}
+
+type Result struct {
+	Data interface{}
+}
+
+func NewDispatcher(target *Node) *Dispatcher {
 	disp := Dispatcher{
 		Target: target,
 		cache:  NewCache(),
-		wp:     NewWorkersPool(numberOfWorkers),
 	}
-
-	var traverseTree func(node *Node, sequence *genericMath.FloatSequence)
-
-	traverseTree = func(node *Node, sequence *genericMath.FloatSequence) {
-		if node.Left == nil && node.Right == nil {
-			node.InitialSequence = sequence
-		}
-
-		if node.Left != nil {
-			traverseTree(node.Left, sequence)
-		}
-		if node.Right != nil {
-			traverseTree(node.Right, sequence)
-		}
-	}
-
-	traverseTree(target, sequence)
 
 	return &disp
+}
+
+// ShowTree traverse  to show
+func ShowTree(node *Node) {
+	if node.Left == nil && node.Right == nil {
+		fmt.Println(node)
+		return
+	}
+
+	if node.Left != nil {
+		ShowTree(node.Left)
+	}
+	if node.Right != nil {
+		ShowTree(node.Right)
+	}
+	fmt.Println(node)
 }
 
 func (disp *Dispatcher) Drop() {
@@ -70,7 +80,6 @@ func (disp *Dispatcher) Drop() {
 
 	traverseTree(disp.Target)
 	disp.cache.Drop()
-	disp.wp.KillWorkersPool()
 }
 
 func Traverse(disp *Dispatcher) float64 {
@@ -93,7 +102,7 @@ func traverseUtil(node *Node, out chan float64, wg *sync.WaitGroup, disp *Dispat
 	var nwg sync.WaitGroup
 	channel := make(chan float64, 2)
 
-	if node.Left != nil { //todo  нужно ли канал?
+	if node.Left != nil {
 		nwg.Add(1)
 		go traverseUtil(node.Left, channel, &nwg, disp)
 	}
@@ -111,7 +120,7 @@ func traverseUtil(node *Node, out chan float64, wg *sync.WaitGroup, disp *Dispat
 
 	result := 0.0
 
-	if node.BinaryAction != nil && node.UnaryAction == nil { //todo проверку в функцию??
+	if node.BinaryAction != nil && node.UnaryAction == nil { // can add this in separate function
 		hash := BinaryIntFuncHash(node.BinaryAction, nodeData[0], nodeData[1])
 
 		item, err := disp.cache.GetItem(hash)
@@ -119,14 +128,14 @@ func traverseUtil(node *Node, out chan float64, wg *sync.WaitGroup, disp *Dispat
 			result = item.(float64)
 		} else {
 			resCh := make(chan *Result, 1)
-			disp.wp.AddJob(&Job{
+			go DoJob(&Job{
 				Data:         nodeData,
 				BinaryAction: node.BinaryAction,
 				Result:       resCh,
 			})
 
 			select {
-			case res := <-resCh:
+			case res := <-resCh: //wait for answer
 				disp.cache.SetItem(hash, res.Data)
 				result = res.Data.(float64)
 				close(resCh)
@@ -139,8 +148,8 @@ func traverseUtil(node *Node, out chan float64, wg *sync.WaitGroup, disp *Dispat
 		if err == nil {
 			result = item.(float64)
 		} else {
-			resCh := make(chan *Result, 1) //sent request in pull
-			disp.wp.AddJob(&Job{
+			resCh := make(chan *Result, 1)
+			go DoJob(&Job{
 				Data:        node.InitialSequence,
 				UnaryAction: node.UnaryAction,
 				Result:      resCh,
@@ -156,4 +165,21 @@ func traverseUtil(node *Node, out chan float64, wg *sync.WaitGroup, disp *Dispat
 	}
 
 	out <- result
+}
+
+func DoJob(job *Job) {
+	if job.UnaryAction != nil && job.BinaryAction == nil {
+		result := &Result{
+			Data: job.UnaryAction(job.Data.(*genericMath.FloatSequence)),
+		}
+		job.Result <- result
+	} else {
+		result := &Result{
+			Data: job.BinaryAction(
+				reflect.ValueOf(job.Data).Index(0).Float(),
+				reflect.ValueOf(job.Data).Index(1).Float(),
+			),
+		}
+		job.Result <- result
+	}
 }

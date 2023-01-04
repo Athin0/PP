@@ -1,10 +1,13 @@
 package main
 
 import (
+	"PP/worker/sequenceRepo"
+	"PP/worker/sequenceRepo/PgRepo"
 	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-ini/ini"
 	uuid "github.com/satori/go.uuid"
 	"io"
@@ -18,7 +21,6 @@ import (
 	"PP/worker/genericMath"
 	"PP/worker/grammar/lexer"
 	"PP/worker/grammar/parser"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 type JobRequest struct {
@@ -39,7 +41,11 @@ func main() {
 	if err := LoadWorkerConfig(); err != nil {
 		log.Fatalln(err)
 	}
-
+	db, err := PgRepo.InitDB()
+	if err != nil {
+		log.Println("error of init db: ", err)
+		return
+	}
 	go HealthCheckProcess()
 
 	c, err := kafka.NewConsumer(
@@ -86,20 +92,25 @@ func main() {
 			continue
 		}
 
-		result, err := CalculateSequence(request.Data) //todo что если отправлять еще и сикванс
+		var bytes []byte
+		result, err := CalculateSequence(request.Data, db)
 		if err != nil {
 			log.Println(err)
-			continue
+			bytes, _ = json.Marshal(
+				map[string]interface{}{
+					"uuid":  request.UUID,
+					"error": err.Error(),
+				},
+			)
+		} else {
+			bytes, _ = json.Marshal(
+				map[string]interface{}{
+					"result": result,
+					"uuid":   request.UUID,
+				},
+			)
+			log.Printf("Calculation result: %f\n", result)
 		}
-
-		log.Printf("Calculation result: %f\n", result)
-
-		bytes, _ := json.Marshal(
-			map[string]interface{}{
-				"result": result,
-				"uuid":   request.UUID,
-			},
-		)
 
 		topic := os.Getenv("KAFKA_TOPIC_WRITE")
 		err = p.Produce(&kafka.Message{
@@ -109,6 +120,7 @@ func main() {
 			},
 			Value: bytes,
 		}, nil)
+
 	}
 }
 
@@ -140,12 +152,7 @@ func InitTestingSequence(path string) (*genericMath.FloatSequence, error) {
 	return &seq, nil
 }
 
-func CalculateSequence(text string) (float64, error) {
-	seq, err := InitTestingSequence(os.Getenv("SEQUENCE_PATH"))
-	if err != nil {
-		return 0, err
-	}
-
+func CalculateSequence(text string, repo sequenceRepo.IRepo) (float64, error) {
 	lex := lexer.New([]rune(text))
 
 	if _bsr, errs := parser.Parse(lex); len(errs) != 0 {
@@ -153,9 +160,11 @@ func CalculateSequence(text string) (float64, error) {
 
 		return 0, ErrParsingString
 	} else {
-		root := astParser.BuildAST(_bsr.GetRoot(), nil)
-
-		disp := asyncDispatching.NewDispatcher(root, seq, 4)
+		root, err := astParser.BuildAST(_bsr.GetRoot(), nil, repo)
+		if err != nil {
+			return 0, err
+		}
+		disp := asyncDispatching.NewDispatcher(root)
 
 		return asyncDispatching.Traverse(disp), nil
 	}

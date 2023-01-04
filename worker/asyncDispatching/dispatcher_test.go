@@ -1,12 +1,7 @@
 package asyncDispatching
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
-	"strings"
 	"testing"
 
 	"PP/worker/genericMath"
@@ -51,39 +46,7 @@ var TestingRoot = Node{
 	},
 }
 
-var TestingSequence, _ = InitTestingSequence()
-
 const TestingResult = "0.0009774308"
-
-func InitTestingSequence() (*genericMath.FloatSequence, error) {
-	seq := genericMath.FloatSequence{}
-
-	file, err := os.Open("../static/data1.txt")
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	reader := bufio.NewReader(file)
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil && err != io.EOF {
-			break
-		}
-
-		data := strings.Split(line, " ")
-		for _, snum := range data {
-			f, _ := strconv.ParseFloat(snum, 64)
-			seq.Append(f)
-		}
-
-		if err != nil {
-			break
-		}
-	}
-
-	return &seq, nil
-}
 
 func evalTraverse() float64 {
 	TestingNode21.Parent = &TestingNode11
@@ -94,7 +57,7 @@ func evalTraverse() float64 {
 	TestingNode11.Parent = &TestingRoot
 	TestingNode12.Parent = &TestingRoot
 
-	disp := NewDispatcher(&TestingRoot, TestingSequence, 4)
+	disp := NewDispatcher(&TestingRoot)
 
 	return Traverse(disp)
 }

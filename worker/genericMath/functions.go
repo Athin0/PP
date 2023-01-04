@@ -26,7 +26,7 @@ type Number interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | float32 | float64
 }
 
-func AtomicAdd[T Number](val *T, delta T) T { //todo заменить на это
+func AtomicAdd[T Number](val *T, delta T) T {
 	var p atomic.Pointer[T]
 	var ans T
 	for {
@@ -85,7 +85,7 @@ func DotProductAsync(seq1 *FloatSequence, seq2 *FloatSequence) (float64, error) 
 		wg.Add(1)
 		go func(a float64, b float64) {
 			defer wg.Done()
-			AtomicAddFloat64(&result, a*b)
+			AtomicAdd(&result, a*b)
 		}(a, b)
 	}
 	wg.Wait()
