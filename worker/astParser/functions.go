@@ -1,46 +1,46 @@
 package astParser
 
-import "PP/worker/genericMath"
+import "PP/worker/Math"
 
 /*
 Function substitutes
 */
-var getMean = func(sequence *genericMath.FloatSequence) float64 {
+var getMean = func(sequence *Math.FloatSequence) float64 {
 	res, _ := sequence.GetMean()
 	return res
 }
 
-var getVariance = func(sequence *genericMath.FloatSequence) float64 {
+var getVariance = func(sequence *Math.FloatSequence) float64 {
 	res, _ := sequence.GetVariance()
 	return res
 }
 
-var getStandardDeviation = func(sequence *genericMath.FloatSequence) float64 {
+var getStandardDeviation = func(sequence *Math.FloatSequence) float64 {
 	res, _ := sequence.GetStandardDeviation()
 	return res
 }
 
 var add = func(a, b float64) float64 {
-	return genericMath.Sum(a, b)
+	return Math.Sum(a, b)
 }
 
 var sub = func(a, b float64) float64 {
-	return genericMath.Sum(a, -b)
+	return Math.Sum(a, -b)
 }
 
 var mul = func(a, b float64) float64 {
-	return genericMath.Multiply(a, b)
+	return Math.Multiply(a, b)
 }
 
 var div = func(a, b float64) float64 {
-	res, _ := genericMath.Divide(a, b)
+	res, _ := Math.Divide(a, b)
 	return res
 }
 
 var min = func(a, b float64) float64 {
-	return genericMath.Min(a, b)
+	return Math.Min(a, b)
 }
 
 var max = func(a, b float64) float64 {
-	return genericMath.Max(a, b)
+	return Math.Max(a, b)
 }

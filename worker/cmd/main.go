@@ -16,9 +16,9 @@ import (
 	"strconv"
 	"strings"
 
+	"PP/worker/Math"
 	"PP/worker/astParser"
 	"PP/worker/asyncDispatching"
-	"PP/worker/genericMath"
 	"PP/worker/grammar/lexer"
 	"PP/worker/grammar/parser"
 )
@@ -124,8 +124,8 @@ func main() {
 	}
 }
 
-func InitTestingSequence(path string) (*genericMath.FloatSequence, error) {
-	seq := genericMath.FloatSequence{}
+func InitTestingSequence(path string) (*Math.FloatSequence, error) {
+	seq := Math.FloatSequence{}
 
 	file, err := os.Open(path)
 	if err != nil {

@@ -1,7 +1,7 @@
 package PgRepo
 
 import (
-	"PP/worker/genericMath"
+	"PP/worker/Math"
 	"PP/worker/sequenceRepo"
 	"database/sql"
 	_ "encoding/json"
@@ -73,7 +73,7 @@ func InitDB() (*PostgresDB, error) {
 	return db, nil
 }
 
-func (db *PostgresDB) GetSequence(title string) (*genericMath.FloatSequence, error) {
+func (db *PostgresDB) GetSequence(title string) (*Math.FloatSequence, error) {
 	var a []byte
 	err := db.db.QueryRow(
 		"SELECT data FROM seq.storage WHERE title = $1 ",
@@ -91,8 +91,8 @@ func (db *PostgresDB) GetSequence(title string) (*genericMath.FloatSequence, err
 
 }
 
-func ParseSequence(a []uint8) (*genericMath.FloatSequence, error) {
-	seq := genericMath.FloatSequence{}
+func ParseSequence(a []uint8) (*Math.FloatSequence, error) {
+	seq := Math.FloatSequence{}
 	a = a[1 : len(a)-1]
 	line := string(a)
 	data := strings.Split(line, ",")

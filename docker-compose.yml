@@ -87,7 +87,6 @@ services:
     image: worker1
     environment:
       - DOCKER_COMPOSE=true
-      - SEQUENCE_PATH=static/c.txt
       - DB_PASSWORD = 'qwerty'
       - CONNECTIONSTRING = "postgres://db:5432"
     volumes:
@@ -122,8 +121,33 @@ services:
       - DOCKER_COMPOSE=true
       - DB_PASSWORD = 'qwerty'
       - CONNECTIONSTRING = "postgres://db:5432"
-    volumes:
-      - ./worker/static:/static
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+  worker4:
+    image: worker1
+    environment:
+      - DOCKER_COMPOSE=true
+      - DB_PASSWORD = 'qwerty'
+      - CONNECTIONSTRING = "postgres://db:5432"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+  worker5:
+    image: worker1
+    environment:
+      - DOCKER_COMPOSE=true
+      - DB_PASSWORD = 'qwerty'
+      - CONNECTIONSTRING = "postgres://db:5432"
     depends_on:
       kafka:
         condition: service_healthy

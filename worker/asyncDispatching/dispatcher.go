@@ -1,13 +1,13 @@
 package asyncDispatching
 
 import (
-	"PP/worker/genericMath"
+	"PP/worker/Math"
 	"fmt"
 	"reflect"
 	"sync"
 )
 
-type UnaryFloatFunction func(*genericMath.FloatSequence) float64
+type UnaryFloatFunction func(*Math.FloatSequence) float64
 
 type BinaryFloatFunction func(float64, float64) float64
 
@@ -17,7 +17,7 @@ type Dispatcher struct {
 }
 
 type Node struct {
-	InitialSequence *genericMath.FloatSequence
+	InitialSequence *Math.FloatSequence
 	Left            *Node
 	Right           *Node
 	Parent          *Node
@@ -170,7 +170,7 @@ func traverseUtil(node *Node, out chan float64, wg *sync.WaitGroup, disp *Dispat
 func DoJob(job *Job) {
 	if job.UnaryAction != nil && job.BinaryAction == nil {
 		result := &Result{
-			Data: job.UnaryAction(job.Data.(*genericMath.FloatSequence)),
+			Data: job.UnaryAction(job.Data.(*Math.FloatSequence)),
 		}
 		job.Result <- result
 	} else {

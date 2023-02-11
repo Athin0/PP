@@ -1,7 +1,8 @@
-package sequenceRepo
+package MemoryRepo
 
 import (
-	"PP/worker/genericMath"
+	"PP/worker/Math"
+	"PP/worker/sequenceRepo"
 	"bufio"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,7 @@ import (
 type MemoryRepo struct {
 }
 
-func (m MemoryRepo) GetSequence(name string) (*genericMath.FloatSequence, error) {
+func (m MemoryRepo) GetSequence(name string) (*Math.FloatSequence, error) {
 	file, err := os.Open("../static/" + name + ".txt")
 	if err != nil {
 		return nil, err
@@ -27,13 +28,13 @@ func (m MemoryRepo) GetSequence(name string) (*genericMath.FloatSequence, error)
 
 }
 
-func (MemoryRepo) GetSequenceJson(file *os.File) (*genericMath.FloatSequence, error) {
+func (MemoryRepo) GetSequenceJson(file *os.File) (*Math.FloatSequence, error) {
 	byteValue, _ := ioutil.ReadAll(file)
-	return GetSequenceJson(byteValue)
+	return sequenceRepo.GetSequenceJson(byteValue)
 }
 
-func (MemoryRepo) GetSequenceTxt(file *os.File) (*genericMath.FloatSequence, error) {
-	seq := genericMath.FloatSequence{}
+func (MemoryRepo) GetSequenceTxt(file *os.File) (*Math.FloatSequence, error) {
+	seq := Math.FloatSequence{}
 
 	reader := bufio.NewReader(file)
 	for {
@@ -55,8 +56,8 @@ func (MemoryRepo) GetSequenceTxt(file *os.File) (*genericMath.FloatSequence, err
 	return &seq, nil
 }
 
-func (MemoryRepo) GetSequenceJson2(file *os.File) (*genericMath.FloatSequence, error) {
-	seq := genericMath.FloatSequence{}
+func (MemoryRepo) GetSequenceJson2(file *os.File) (*Math.FloatSequence, error) {
+	seq := Math.FloatSequence{}
 
 	reader := bufio.NewReader(file)
 	for {

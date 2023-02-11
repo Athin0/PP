@@ -1,8 +1,8 @@
 package astParser
 
 import (
+	"PP/worker/Math"
 	"PP/worker/asyncDispatching"
-	"PP/worker/genericMath"
 	"PP/worker/grammar/lexer"
 	"PP/worker/grammar/parser"
 	"PP/worker/sequenceRepo/PgRepo"
@@ -44,8 +44,8 @@ func TestTraverse(t *testing.T) {
 	}
 }
 
-func InitTestingSequence(path string) (*genericMath.FloatSequence, error) {
-	seq := genericMath.FloatSequence{}
+func InitTestingSequence(path string) (*Math.FloatSequence, error) {
+	seq := Math.FloatSequence{}
 
 	file, err := os.Open(path)
 	if err != nil {

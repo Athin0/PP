@@ -7,7 +7,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"PP/worker/genericMath"
+	"PP/worker/Math"
 )
 
 type Cache struct {
@@ -82,7 +82,7 @@ func BinaryIntFuncHash(f BinaryFloatFunction, d1 float64, d2 float64) string {
 		fmt.Sprint(d1) + fmt.Sprint(d2)
 }
 
-func UnaryIntSeqFuncHash(f UnaryFloatFunction, seq *genericMath.FloatSequence) string {
+func UnaryIntSeqFuncHash(f UnaryFloatFunction, seq *Math.FloatSequence) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name() +
 		fmt.Sprint(unsafe.Pointer(seq))
 }

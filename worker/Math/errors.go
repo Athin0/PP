@@ -1,4 +1,4 @@
-package genericMath
+package Math
 
 import (
 	"errors"

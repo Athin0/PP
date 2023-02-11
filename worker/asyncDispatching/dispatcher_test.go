@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"testing"
 
-	"PP/worker/genericMath"
+	"PP/worker/Math"
 )
 
-var getMean = func(sequence *genericMath.FloatSequence) float64 {
+var getMean = func(sequence *Math.FloatSequence) float64 {
 	res, _ := sequence.GetMean()
 	return res
 }
-var getDispersion = func(sequence *genericMath.FloatSequence) float64 {
+var getDispersion = func(sequence *Math.FloatSequence) float64 {
 	res, _ := sequence.GetVariance()
 	return res
 }
-var getDispersionAsync = func(sequence *genericMath.FloatSequence) float64 {
+var getDispersionAsync = func(sequence *Math.FloatSequence) float64 {
 	res, _ := sequence.GetStandardDeviation()
 	return res
 }
@@ -28,21 +28,21 @@ var TestingNode11 = Node{
 	Left:  &TestingNode21,
 	Right: &TestingNode22,
 	BinaryAction: func(a, b float64) float64 {
-		return genericMath.Min(a, b)
+		return Math.Min(a, b)
 	},
 }
 var TestingNode12 = Node{
 	Left:  &TestingNode23,
 	Right: &TestingNode24,
 	BinaryAction: func(a, b float64) float64 {
-		return genericMath.Max(a, b)
+		return Math.Max(a, b)
 	},
 }
 var TestingRoot = Node{
 	Left:  &TestingNode11,
 	Right: &TestingNode12,
 	BinaryAction: func(a, b float64) float64 {
-		return genericMath.Multiply(a, b)
+		return Math.Multiply(a, b)
 	},
 }
 
